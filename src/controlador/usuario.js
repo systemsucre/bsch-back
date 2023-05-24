@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { Usuario } from "../modelo/usuario.js"
-import { eliminar, buscar, siguiente, validar, deshabilitar, actualizarRol } from '../validacion/usuario.js'
+import { eliminar, buscar, siguiente,insertar,actualizar, deshabilitar } from '../validacion/usuario.js'
 import pool from '../modelo/bdConfig.js'
 import { CLAVEGMAIL } from '../config.js'
 import nodemailer from "nodemailer";
@@ -86,95 +86,6 @@ rutas.post("/buscareliminados", buscar, async (req, res) => {
 
 })
 
-rutas.post("/actualizarrol", actualizarRol, async (req, res) => {
-    try {
-        const { id, idrol, sueldo, modificado, usuario } = req.body
-        const ssql = `delete from sesion
-                        WHERE idpersonal = ${pool.escape(id)}`;
-        await pool.query(ssql)
-
-        const updatePerson = `update personal set 
-                            idrol = ${pool.escape(idrol)},
-                            sueldo = ${pool.escape(sueldo)},
-                            modificado = ${pool.escape(modificado)},
-                            usuario = ${pool.escape(usuario)}
-                            where id = ${pool.escape(id)}
-                        `
-        await pool.query(updatePerson)
-
-        const result = await usuarios.ver(id)
-
-        // console.log(result, 'datos de la consulta ver usuario', id)
-        return res.json({ data: result, ok: true, msg: 'Los privilegios se actualizaron correctamente' })
-
-    } catch (error) {
-        console.log(error)
-        return res.json({ ok: false, msg: 'Error en el Servidor' })
-    }
-});
-
-
-
-rutas.post("/validar", validar, async (req, res) => {
-    console.log(req.body, 'datos')
-    try {
-        const { id, idproyecto, idrol, modificado, usuario, sueldo, user } = req.body;
-        const datos = {
-            id, idproyecto, idrol, sueldo, modificado, usuario
-        }
-        const resultado = await usuarios.validar(datos)
-        // console.log(resultado)
-
-
-
-
-        // const sqlInfoHospital = `SELECT correo, telefono from hospital`;
-        // const [infoHospital] = await pool.query(sqlInfoHospital)
-
-        // if (infoHospital.length === 1) {
-
-
-        //     let jConfig = {
-        //         "host": "smtp.gmail.com",
-        //         "port": "465",
-        //         "secure": true,
-        //         "auth": {
-        //             "user": infoHospital[0].correo,
-        //             "pass": CLAVEGMAIL
-        //         }
-        //     };
-        //     // console.log(infoHospital[0].correo, 'correo electronico')
-        //     let email = {
-        //         from: infoHospital[0].correo,  //remitente
-        //         to: user.correo,  //destinatario
-        //         subject: "UNIDAD SERVICIOS COMPLEMENTARIOS HOSPITAL SAN PEDRO CLAVER",  //asunto del correo
-        //         html: ` 
-        //             <div> 
-        //             <p>Hola ${user.nombre + ' ' + user.apellidoPaterno + ' ' + user.apellidoMaterno} </p> 
-        //             <h2>Su cuenta en el Sistema de Solicitudes de Servicios Somplementarios ha sido confirmado.</h2>  
-        //             <label>Ya puede acceder.</label>  
-
-        //             <p>Para mas informacion contactese con el administrador del área de Informatica.</p> 
-        //             <p>Tel/cel: ${infoHospital[0].telefono}</p> 
-
-        //             </div> 
-        //         `
-        //     };
-
-        //     let createTransport = nodemailer.createTransport(jConfig);
-        //     createTransport.sendMail(email, function (error, info) {
-        //         if(error) console.log(error)
-        //         createTransport.close();
-        //     });
-        // }
-
-        return res.json({ data: resultado, msg: 'Operacion Exitosa', ok: true })
-    } catch (error) {
-        console.log(error)
-        return res.json({ ok: false, msg: 'Error del servidor' })
-    }
-
-})
 
 
 rutas.post("/deshabilitar", deshabilitar, async (req, res) => {
@@ -186,7 +97,7 @@ rutas.post("/deshabilitar", deshabilitar, async (req, res) => {
         }
         const sqlRestricciones = `
         select a.estado from personal p inner join asignacion a on p.id = a.idpersonal
-        where p.id = ${pool.escape(id)} and (a.estado = 1 or a.estado = 2)
+        where p.id = ${pool.escape(id)} and (a.estado = 1 or a.estado = 2) and a.eliminado = false
     `
         const [restricciones] = await pool.query(sqlRestricciones)
         if (restricciones.length === 0) {
@@ -203,21 +114,18 @@ rutas.post("/deshabilitar", deshabilitar, async (req, res) => {
 
 rutas.post("/habilitar", deshabilitar, async (req, res) => {
     // console.log(req.body)
-    try {
-        const { id, modificado, usuario } = req.body;
+    try{
+        
+        const {id, modificado, usuario} = req.body
         const datos = {
-            id, modificado, usuario
+            id,
+            modificado,
+            usuario
         }
-        const sqlRestricciones = `
-        select a.estado from personal p inner join asignacion a on p.id = a.idpersonal
-        where p.id = ${pool.escape(id)} and (a.estado = 1 or a.estado = 2)
-    `
-        const [restricciones] = await pool.query(sqlRestricciones)
-        if (restricciones.length === 0) {
             const resultado = await usuarios.habilitar(datos)
             console.log(resultado)
             return res.json({ data: resultado, ok: true, msg: 'El usuario se ha habilitado exitosamente' })
-        } else return res.json({ ok: false, msg: 'El usurio debe rendir cuentas' })
+       
     } catch (error) {
         console.log(error)
         return res.json({ ok: false, msg: 'Error del servidor' })
@@ -233,8 +141,14 @@ rutas.post("/eliminar", eliminar, async (req, res) => {
         const datos = {
             id, modificado: fecha, usuario
         }
-        const resultado = await usuarios.eliminar(datos)
-        return res.json({ data: resultado, ok: true, msg: 'El usuario se ha eliminado exitosamente' })
+        const sqlRestricciones = `
+        select a.estado from personal p inner join asignacion a on p.id = a.idpersonal
+        where p.id = ${pool.escape(id)} and (a.estado = 1 or a.estado = 2) and a.eliminado = false`
+        const [restricciones] = await pool.query(sqlRestricciones)
+        if (restricciones.length === 0) {
+            const resultado = await usuarios.eliminar(datos)
+            return res.json({ data: resultado, ok: true, msg: 'El usuario se ha eliminado exitosamente' })
+        } else return res.json({ ok: false, msg: 'El usurio debe rendir cuentas' })
     } catch (error) {
         console.log(error)
         return res.json({ ok: false, msg: 'Error, Elimine los registros dependientes' })
@@ -319,6 +233,7 @@ rutas.post("/anterioreliminados", siguiente, async (req, res) => {
 
 })
 
+
 rutas.post("/all", async (req, res) => {
     // console.log(req.body, 'controlador')  
     try {
@@ -329,6 +244,8 @@ rutas.post("/all", async (req, res) => {
         return res.json({ ok: false, msg: 'Error en el servidor' })
     }
 })
+
+
 
 rutas.post("/reciclaje", async (req, res) => {
     try {
@@ -354,6 +271,142 @@ rutas.post("/recet", async (req, res) => {
     }
 })
 
+
+
+
+rutas.post("/buscarAsignacion", buscar, async (req, res) => {
+    // console.log(req.body)
+    const dato = req.body.dato
+    try {
+        const resultado = await usuarios.buscarAsinacionUsuario(dato)
+        return res.send({ data: resultado, ok: true })
+    } catch (error) {
+        console.log(error)
+        return res.json({ ok: false, msg: 'Error en el servidor' })
+    }
+
+})
+
+
+
+
+
+
+
+
+rutas.post("/listarasignacion", async (req, res) => {
+    // console.log(req.body, 'controlador')  
+    try {
+        const resultado = await usuarios.listarAsignacionUsuario()
+        return res.json({ data: resultado, ok: true })
+    } catch (error) {
+        console.log(error)
+        return res.json({ ok: false, msg: 'Error en el servidor' })
+    }
+})
+
+rutas.post("/nextListarAsignacion", siguiente, async (req, res) => {
+
+    let id = req.body.id
+    try {
+        const resultado = await usuarios.listarSiguienteAsinacionUsuario(id)
+        if (resultado.length > 0)
+            return res.json({ ok: true, data: resultado })
+        else
+            return res.json({ ok: false, msg: 'Ya no hay mas registros!' })
+    } catch (error) {
+        console.log(error)
+        return res.json({ ok: false, msg: 'Error en el servidor' })
+    }
+})
+
+rutas.post("/anteriorListarAsignacion", siguiente, async (req, res) => {
+    let id = req.body.id
+    try {
+        const resultado = await usuarios.listarAnteriorAsinacionUsuario(id)
+        if (resultado.length > 0)
+            return res.json({ ok: true, data: resultado })
+        else
+            return res.json({ ok: false, msg: 'Ya no hay mas registros!' })
+    } catch (error) {
+        console.log(error)
+        return res.json({ ok: false, msg: 'Error en el servidor' })
+    }
+
+})
+
+
+
+rutas.post("/registrar", insertar, async (req, res) => {
+
+    console.log('datos: ', req.body)
+
+    const {idrol, sueldo, username, xyz, ci, nombre, apellido1,
+        apellido2, telefono, creado, usuario } = req.body
+    const datos = {
+        idrol,
+        sueldo,
+        username,
+        pass: xyz,
+        ci,
+        nombre,
+        apellido1,
+        apellido2,
+        celular: telefono,
+        validar:1,
+        creado,
+        usuario
+    }
+    try {
+        const resultado = await usuarios.insertar(datos)
+
+        if (resultado.existe === 1)
+            return res.json({ ok: false, msg: 'Este usuario ya esta registrado' })
+        if (resultado.existe === 2)
+            return res.json({ ok: false, msg: 'Este C.I. ya esta registrado' })
+        else
+            return res.json({data:resultado, ok: true, msg: "El Usuario se ha registrado correctamente" });
+
+    } catch (error) {
+        console.log(error)
+        return res.json({ msg: 'Error en el Servidor', ok: false })
+    }
+})
+
+
+rutas.post("/actualizar", actualizar, async (req, res) => {
+
+    console.log('datos: ', req.body)
+
+    const {id,idrol, sueldo, ci, nombre, apellido1,
+        apellido2, telefono, modificado, usuario } = req.body
+    const datos = {
+        id,
+        idrol,
+        sueldo,
+        ci,
+        nombre,
+        apellido1,
+        apellido2,
+        celular: telefono,
+        modificado,
+        usuario
+    }
+    try {
+        const resultado = await usuarios.actualizar(datos)
+
+        if (resultado.existe === 1)
+            return res.json({ ok: false, msg: 'Este usuario ya esta registrado' })
+        if (resultado.existe === 2)
+            return res.json({ ok: false, msg: 'Este C.I. ya esta registrado' })
+        else
+            return res.json({data:resultado, ok: true, msg: "El Usuario se ha registrado correctamente" });
+
+    } catch (error) {
+        console.log(error)
+        return res.json({ msg: 'Error en el Servidor', ok: false })
+    }
+})
 
 
 export default rutas;

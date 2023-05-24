@@ -1,6 +1,8 @@
+
+
 import { Router } from "express"
 import { Usuario } from '../../modelo/usuario.js'
-import { registrarme } from '../../validacion/usuario.js'
+import { insertar } from '../../validacion/usuario.js'
 import { Informacion } from '../../modelo/informacion.js'
 // import nodemailer from "nodemailer";
 // import { CLAVEGMAIL } from '../../config.js'
@@ -22,12 +24,11 @@ rutas.get('/empresa', async (req, res) => {
         return res.json({ ok: true, data: resultado })
 
     } catch (error) {
-        console.log(error)
         return res.json({ ok: true, msg: 'error en el servidor' })
     }
 })
 
-rutas.get("/registrarme", registrarme, async (req, res) => {
+rutas.get("/registrarme", insertar, async (req, res) => {
 
     console.log('datos: ', req.query)
 
@@ -42,10 +43,9 @@ rutas.get("/registrarme", registrarme, async (req, res) => {
         apellido2,
         celular: telefono,
         creado,
-        usuario:0
     }
     try {
-        const resultado = await usuario.registrarme(datos)
+        const resultado = await usuario.insertar(datos)
 
         if (resultado.existe === 1)
             return res.json({ ok: false, msg: 'Este usuario ya esta registrado' })
@@ -103,7 +103,7 @@ rutas.get("/registrarme", registrarme, async (req, res) => {
 
     } catch (error) {
         console.log(error)
-        return res.json({ msg: 'Error en el Servidor', ok: false })
+        return res.json({ msg: 'Intente nuevamente', ok: false })
     }
 })
 
@@ -121,6 +121,20 @@ rutas.get("/registrarme", registrarme, async (req, res) => {
 
 
 
+
+
+
+rutas.get("/hospital", async (req, res) => {
+
+    try {
+        const resultado = await hospital.listarParaRegistro()
+        console.log(resultado)
+        return res.json(resultado)
+    } catch (error) {
+        return res.status(500).send(error)
+    }
+
+})
 
 
 

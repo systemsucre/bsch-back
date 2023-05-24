@@ -30,7 +30,7 @@ export class Reportes {
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto
         left join gasto g on a.id = g.idasignacion
-        where a.estado = 3 and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        where a.eliminado = false and a.estado = 3 and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
         const [rows] = await pool.query(sql)
         return rows
     }
@@ -39,7 +39,7 @@ export class Reportes {
         const sql = `select sum(a.monto) as total
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto
-        where a.estado = 3 and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        where a.eliminado = false and a.estado = 3 and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
         const [rows] = await pool.query(sql)
         return rows
     }
@@ -55,7 +55,7 @@ export class Reportes {
         inner join asignacion a on p.id = a.idproyecto
         inner join personal pe on pe.id = a.idpersonal
         left join gasto g on a.id = g.idasignacion
-        where a.estado = 3 and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        where a.eliminado = false and a.estado = 3 and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
         const [rows] = await pool.query(sql)
 
         const [gasto] = await this.totalGatoPorProyecto(id)
@@ -73,7 +73,7 @@ export class Reportes {
         inner join asignacion a on p.id = a.idproyecto
         inner join personal pe on pe.id = a.idpersonal 
         left join gasto g on a.id = g.idasignacion
-        where a.estado = 3 and pe.id = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        where a.eliminado = false and a.estado = 3 and pe.id = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
         const [rows] = await pool.query(sql)
         return rows
     }
@@ -83,7 +83,7 @@ export class Reportes {
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto 
         inner join personal pe on pe.id = a.idpersonal 
-        where a.estado = 3 and pe.id = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        where a.eliminado = false and a.estado = 3 and pe.id = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
         const [rows] = await pool.query(sql)
         return rows
     }
@@ -99,7 +99,7 @@ export class Reportes {
         inner join asignacion a on p.id = a.idproyecto
         inner join personal pe on a.idpersonal = pe.id
         left join gasto g on a.id = g.idasignacion
-        where a.estado = 3 and pe.id  = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        where a.eliminado = false and a.estado = 3 and pe.id  = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
         const [rows] = await pool.query(sql)
 
         const [gasto] = await this.totalGatoPorPersona(id)
@@ -115,7 +115,7 @@ export class Reportes {
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto
         left join gasto g on a.id = g.idasignacion
-        where a.estado = ${pool.escape(id.estado)}  and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)}  and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
         const [rows] = await pool.query(sql)
         return rows
     }
@@ -125,7 +125,7 @@ export class Reportes {
         const sql = `select sum(a.monto) as total
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto
-        where a.estado = ${pool.escape(id.estado)}  and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)}  and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
         const [rows] = await pool.query(sql)
         return rows
     }
@@ -141,7 +141,7 @@ export class Reportes {
         inner join asignacion a on p.id = a.idproyecto
         inner join personal pe on pe.id = a.idpersonal
         left join gasto g on a.id = g.idasignacion
-        where a.estado = ${pool.escape(id.estado)} and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
         const [rows] = await pool.query(sql)
 
         const [gasto] = await this.totalGatoPorEstado(id)
@@ -161,7 +161,7 @@ export class Reportes {
             left join gasto g on a.id = g.idasignacion
             left join tipo t on g.idtipo = t.id
 
-            where a.estado = 3 and t.id = ${pool.escape(id.tipo)}  and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+            where a.eliminado = false and a.estado = 3 and t.id = ${pool.escape(id.tipo)}  and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
         console.log(sql)
         const [rows] = await pool.query(sql)
         if (rows.length === 0)
@@ -173,7 +173,7 @@ export class Reportes {
         const sql = `select sum(a.monto) as total
                 from proyecto p
                 inner join asignacion a on p.id = a.idproyecto
-                where a.estado = 3 and  p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+                where a.eliminado = false and a.estado = 3 and  p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
         console.log(sql)
         const [rows] = await pool.query(sql)
         if (rows.length === 0)
@@ -195,7 +195,7 @@ export class Reportes {
         left join gasto g on a.id = g.idasignacion
         left join tipo t on g.idtipo = t.id
 
-        where a.estado = 3 and t.id= ${pool.escape(id.tipo)} and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        where a.eliminado = false and a.estado = 3 and t.id= ${pool.escape(id.tipo)} and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
         const [rows] = await pool.query(sql)
 
         const [gasto] = await this.totalGatoPorTipo(id)
@@ -203,15 +203,5 @@ export class Reportes {
 
         return [rows, total, gasto]
     }
-
-
-
-
-
-
-
-
-
-
 
 }

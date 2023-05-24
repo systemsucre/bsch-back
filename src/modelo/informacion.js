@@ -5,16 +5,9 @@ export class Informacion {
   
     // METODOS
 
-    listarParaRegistro = async () => {
-
-        // console.log('solicitud')
-
-        const [rows] = await pool.query("SELECT red, nombre, telefono, direccion FROM hospital")
-        return rows
-    } 
 
     listar = async () => {
-        const sql = `select e.id,  e.nombre, e.telefono, e.direccion, e.correo, concat(u.nombre,'  ', u.apellido1, u.apellido2) as usuario, 
+        const sql = `select e.id,  e.nombre, e.telefono, e.direccion, e.correo, concat(u.nombre,'  ', u.apellido1,' ' ,u.apellido2) as usuario, 
         DATE_FORMAT(e.creado, "%Y-%m-%d") as creado, DATE_FORMAT(e.modificado, "%Y-%m-%d") as modificado
         from empresa e 
         left join personal u on e.usuario = u.id;

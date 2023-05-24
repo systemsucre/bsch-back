@@ -23,7 +23,7 @@ export class Gasto {
         const sql =
             `SELECT a.id, a.comprobante,a.descripcion, DATE_FORMAT(a.fecha,"%Y-%m-%d") as fecha, a.monto, a.tipo, a.estado
             from asignacion a inner join personal p on a.idpersonal = p.id
-            where p.id = ${pool.escape(datos.usuario)} and a.comprobante  like '${datos.comprobante}%'
+            where a.eliminado = false and p.id = ${pool.escape(datos.usuario)} and a.comprobante  like '${datos.comprobante}%'
             ORDER by a.id DESC;`;
         // console.log(sql)
         const [rows] = await pool.query(sql)
@@ -301,10 +301,5 @@ export class Gasto {
         await pool.query(sql)
         return await this.listargastos(idAsignacion)
     }
-
-
-
-
-
 
 }

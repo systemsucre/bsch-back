@@ -5,21 +5,7 @@ export class Usuario {
 
     // METODOS
 
-    buscar = async (dato) => {
-        // console.log('los datos han llegado', dato)
-        const sql =
-            `SELECT pe.id, pe.username, pe.ci, pe.nombre,
-            pe.apellido1,
-            pe.apellido2,pe.celular, pe.sueldo, pe.validar 
-            from personal pe 
-            where (pe.nombre like '${dato}%' or
-            pe.ci like '${dato}%' or
-            pe.apellido1  like '${dato}%' or
-            pe.apellido2  like '${dato}%') and pe.eliminado = false
-            ORDER by pe.id`;
-        const [rows] = await pool.query(sql)
-        return rows
-    }
+
 
     buscarEliminado = async (dato) => {
         // console.log('los datos han llegado', dato)    
@@ -50,6 +36,9 @@ export class Usuario {
         return rows
     }
 
+
+
+
     listarReciclaje = async () => {
         const sql =
             `SELECT pe.id, pe.username, pe.ci, pe.nombre,
@@ -63,8 +52,21 @@ export class Usuario {
         return rows
     }
 
-
-
+    buscar = async (dato) => {
+        // console.log('los datos han llegado', dato)
+        const sql =
+            `SELECT pe.id, pe.username, pe.ci, pe.nombre,
+            pe.apellido1,
+            pe.apellido2,pe.celular, pe.sueldo, pe.validar 
+            from personal pe 
+            where (pe.nombre like '${dato}%' or
+            pe.ci like '${dato}%' or
+            pe.apellido1  like '${dato}%' or
+            pe.apellido2  like '${dato}%') and pe.eliminado = false
+            ORDER by pe.id`;
+        const [rows] = await pool.query(sql)
+        return rows
+    }
     listarSiguiente = async (id) => {
         const sql =
             `SELECT pe.id, pe.username, pe.ci, pe.nombre,
@@ -75,6 +77,18 @@ export class Usuario {
         const [rows] = await pool.query(sql)
         return rows
     }
+    listarAnterior = async (id) => {
+        const sql =
+            `SELECT pe.id, pe.username, pe.ci, pe.nombre,
+            pe.apellido1,
+            pe.apellido2,pe.celular, pe.sueldo, pe.validar 
+            from personal pe 
+            WHERE pe.id > ${pool.escape(id)} and pe.eliminado = false limit 10`;
+        const [rows] = await pool.query(sql)
+        rows.reverse()
+        return rows
+    }
+
 
     listarSiguienteEliminados = async (id) => {
         const sql =
@@ -89,17 +103,6 @@ export class Usuario {
 
 
 
-    listarAnterior = async (id) => {
-        const sql =
-            `SELECT pe.id, pe.username, pe.ci, pe.nombre,
-            pe.apellido1,
-            pe.apellido2,pe.celular, pe.sueldo, pe.validar 
-            from personal pe 
-            WHERE pe.id > ${pool.escape(id)} and pe.eliminado = false limit 10`;
-        const [rows] = await pool.query(sql)
-        rows.reverse()
-        return rows
-    }
 
     listarAnteriorEliminados = async (id) => {
         const sql =
@@ -120,6 +123,9 @@ export class Usuario {
         const sql = `update personal set eliminado = true , modificado = ${pool.escape(datos.modificado)}, usuario = ${pool.escape(datos.usuario)}
         WHERE id =  ${pool.escape(datos.id)}`;
         await pool.query(sql)
+        const ssql = `delete from sesion
+        WHERE idpersonal = ${pool.escape(datos.id)}`;
+        await pool.query(ssql)
         return await this.listar()
     }
 
@@ -218,6 +224,62 @@ export class Usuario {
             const [rowsCi] = await pool.query(sqlexisteCi)
 
             if (rowsCi.length === 0) {
+                await pool.query("INSERT INTO personal SET  ?", datos)
+                return await this.listar()
+            } else return { existe: 2 }
+        }
+        else return { existe: 1 }
+    }
+
+
+    actualizar = async (datos) => {
+
+        const sqlexisteusername =
+            `SELECT username from personal where
+                username = ${pool.escape(datos.username)} and id != ${pool.escape(datos.id)}`;
+        const [rows] = await pool.query(sqlexisteusername)
+
+        if (rows.length === 0) {
+            const sqlexisteCi =
+                `SELECT ci from personal where
+                ci = ${pool.escape(datos.ci)} and id != ${pool.escape(datos.id)}`;
+            const [rowsCi] = await pool.query(sqlexisteCi)
+
+            if (rowsCi.length === 0) {
+                const sql = `UPDATE personal SET
+                idrol = ${pool.escape(datos.idrol)},
+                sueldo = ${pool.escape(datos.sueldo)},
+                ci = ${pool.escape(datos.ci)},
+                nombre = ${pool.escape(datos.nombre)},
+                apellido1 = ${pool.escape(datos.apellido1)},
+                apellido2 = ${pool.escape(datos.apellido2)},
+                celular = ${pool.escape(datos.celular)},
+                modificado = ${pool.escape(datos.modificado)},
+                usuario = ${pool.escape(datos.usuario)}
+                WHERE id = ${pool.escape(datos.id)}`;
+
+                await pool.query(sql)
+
+                return await this.ver(datos.id)
+            } else return { existe: 2 }
+        }
+        else return { existe: 1 }
+    }
+
+    registrarme = async (datos) => {
+
+        const sqlexisteusername =
+            `SELECT username from personal where
+                username = ${pool.escape(datos.username)}`;
+        const [rows] = await pool.query(sqlexisteusername)
+
+        if (rows.length === 0) {
+            const sqlexisteCi =
+                `SELECT ci from personal where
+                ci = ${pool.escape(datos.ci)}`;
+            const [rowsCi] = await pool.query(sqlexisteCi)
+
+            if (rowsCi.length === 0) {
                 const resultado = await pool.query("INSERT INTO personal SET  ?", datos)
                 return resultado
             } else return { existe: 2 }
@@ -225,28 +287,6 @@ export class Usuario {
         else return { existe: 1 }
     }
 
-
-
-    actualizarRol = async (datos) => {
-
-
-        await pool.query("INSERT INTO rolusuario SET  ?", datos)
-        return
-    }
-
-
-    validar = async (datos) => {
-        const sql = `UPDATE personal SET
-            idproyecto = ${pool.escape(datos.idproyecto)},
-            idrol = ${pool.escape(datos.idrol)},
-            sueldo = ${pool.escape(datos.sueldo)},
-            validar = true,
-            modificado = ${pool.escape(datos.modificado)},
-            usuario = ${pool.escape(datos.usuario)}
-            WHERE id = ${pool.escape(datos.id)}`;
-        await pool.query(sql)
-        return await this.listar()
-    }
 
 
     deshabilitar = async (datos) => {
@@ -315,7 +355,7 @@ export class Usuario {
 
         const sql = `UPDATE personal SET
                 pass = ${pool.escape(datos.pass1)},
-                usuario = ${pool.escape(datos.Usuario)},
+                usuario = ${pool.escape(datos.usuario)},
                 modificado = ${pool.escape(datos.fecha)}
                 WHERE id = ${pool.escape(datos.id)}`;
 
@@ -360,6 +400,62 @@ export class Usuario {
         return rows
     }
 
+
+
+
+
+
+
+    listarAsignacionUsuario = async () => {
+        const sql =
+            `SELECT pe.id, pe.username, pe.ci, pe.nombre,
+            pe.apellido1,
+            pe.apellido2,pe.celular, pe.sueldo, pe.validar 
+            from personal pe inner join rol on pe.idrol = rol.id
+            where pe.eliminado = false and pe.validar = true and rol.numero = 2
+            ORDER by pe.id DESC limit 10;`;
+        const [rows] = await pool.query(sql)
+        // console.log(rows, 'lista')
+        return rows
+    }
+    buscarAsinacionUsuario = async (dato) => {
+        // console.log('los datos han llegado', dato)
+        const sql =
+            `SELECT pe.id, pe.username, pe.ci, pe.nombre,
+            pe.apellido1,
+            pe.apellido2,pe.celular, pe.sueldo, pe.validar 
+            from personal pe inner join rol on pe.idrol = rol.id
+            where (pe.nombre like '${dato}%' or
+            pe.ci like '${dato}%' or
+            pe.apellido1  like '${dato}%' or
+            pe.apellido2  like '${dato}%') and pe.eliminado = false and pe.validar = true and rol.numero = 2
+            ORDER by pe.id`;
+        const [rows] = await pool.query(sql)
+        return rows
+    }
+    listarSiguienteAsinacionUsuario = async (id) => {
+        const sql =
+            `SELECT pe.id, pe.username, pe.ci, pe.nombre,
+            pe.apellido1,
+            pe.apellido2,pe.celular, pe.sueldo, pe.validar 
+            from personal pe inner join rol on pe.idrol = rol.id
+            where pe.eliminado = false and pe.validar = true and rol.numero = 2
+            and pe.id < ${pool.escape(id)} ORDER by id DESC  limit 10`;
+        const [rows] = await pool.query(sql)
+        return rows
+    }
+    listarAnteriorAsinacionUsuario = async (id) => {
+        const sql =
+            `SELECT pe.id, pe.username, pe.ci, pe.nombre,
+            pe.apellido1,
+            pe.apellido2,pe.celular, pe.sueldo, pe.validar 
+            from personal pe inner join rol on pe.idrol = rol.id
+            WHERE pe.validar = true and rol.numero = 2 and
+            pe.id > ${pool.escape(id)} and pe.eliminado = false limit 10`;
+        const [rows] = await pool.query(sql)
+        rows.reverse()
+        return rows
+    }
 
 
 

@@ -1,6 +1,6 @@
 import { Router } from "express"
 import { Usuario } from "../modelo/usuario.js"
-import { eliminar, buscar, siguiente,insertar,actualizar, deshabilitar } from '../validacion/usuario.js'
+import { eliminar, buscar, siguiente,insertar,actualizar, deshabilitar, habilitar } from '../validacion/usuario.js'
 import pool from '../modelo/bdConfig.js'
 import { CLAVEGMAIL } from '../config.js'
 import nodemailer from "nodemailer";
@@ -112,13 +112,15 @@ rutas.post("/deshabilitar", deshabilitar, async (req, res) => {
 
 })
 
-rutas.post("/habilitar", deshabilitar, async (req, res) => {
+rutas.post("/habilitar", habilitar, async (req, res) => {
     // console.log(req.body)
     try{
         
-        const {id, modificado, usuario} = req.body
+        const {id, idrol, sueldo, modificado, usuario} = req.body
         const datos = {
             id,
+            idrol,
+            sueldo,
             modificado,
             usuario
         }

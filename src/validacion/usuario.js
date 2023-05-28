@@ -162,6 +162,28 @@ export const actualizarRolesServicios = [
     }
 ]
 
+export const habilitar = [
+    check('id')
+        .isLength({ min: 1 })
+        .exists().isNumeric(),
+    check('idrol')
+        .exists()
+        .isLength({ min: 1 }).isNumeric(),
+    check('sueldo')
+        .exists()
+        .matches(/^[0-9]{1,20}$/),
+    check('modificado')
+        .exists()
+        .matches(/^\d{4}-\d{2}-\d{2} \d{1,2}:\d{2}:\d{2}$/),
+    check('usuario')
+        .exists()
+        .isLength({ min: 1 }).isNumeric(),
+
+    (req, res, next) => {
+        validaciones(req, res, next)
+    }
+]
+
 export const deshabilitar = [
     check('id')
         .isLength({ min: 1 })

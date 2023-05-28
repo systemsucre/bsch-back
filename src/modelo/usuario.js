@@ -309,6 +309,8 @@ export class Usuario {
     habilitar = async (datos) => {
         const sql = `UPDATE personal SET
             validar = true,
+            idrol = ${pool.escape(datos.idrol)},
+            sueldo = ${pool.escape(datos.sueldo)},
             modificado = ${pool.escape(datos.modificado)},
             usuario = ${pool.escape(datos.usuario)}
             WHERE id = ${pool.escape(datos.id)}`;

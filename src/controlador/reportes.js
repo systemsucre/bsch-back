@@ -41,7 +41,7 @@ rutas.post("/porproyecto", async (req, res) => {
     const datos = {ini, fin, proyecto}    
     try {
         const resultado = await reportes.generarReportePorProyecto(datos)
-        console.log(resultado)
+        // console.log(resultado)
         return res.json({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)
@@ -52,11 +52,11 @@ rutas.post("/porproyecto", async (req, res) => {
 
 rutas.post("/porpersona", async (req, res) => {  
     // console.log('llega al controlador', req.body) 
-    const {persona, ini, fin} = req.body         
-    const datos = {ini, fin, persona}    
+    const {persona, ini,estado, fin} = req.body         
+    const datos = {ini, fin,estado, persona}    
     try {
         const resultado = await reportes.generarReportePorPersona(datos)
-        console.log(resultado)
+        // console.log(resultado)
         return res.json({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)

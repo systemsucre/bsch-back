@@ -11,7 +11,8 @@ export class Reportes {
     }
 
     personal = async () => {
-        const sql = `SELECT id, concat(nombre,' ',apellido1,' ',apellido2) as nombre from personal where eliminado = false;`
+        const sql = `SELECT p.id, concat(p.nombre,' ',p.apellido1,' ',p.apellido2) as nombre from personal p inner join rol r on 
+        p.idrol = r.id   where eliminado = false and r.numero = 2;`
         const [rows] = await pool.query(sql)
         console.log(rows)
         return rows
@@ -25,131 +26,270 @@ export class Reportes {
 
     // por proyecto
 
-    totalGatoPorProyecto = async (id) => {
-        const sql = `select sum(g.egreso) as total
+    listaGastoPorProyecto = async (id) => {
+        const sql = `select p.nombre as proyecto, concat(pe.nombre,' ',pe.apellido1,' ',pe.apellido2) as personal, a.descripcion as descripcionasignacion,
+        a.comprobante as detalleasignacion, 
+        g.descripcion as descripciongasto, g.comprobante as detallegasto, t.tipo as tipogasto, c.clasificacion as clasificaciongasto, DATE_FORMAT(g.fecha, "%Y-%m-%d") as fechagasto,
+        g.egreso as egresogasto, g.tipo as metodo, g.factura as facturagasto, pr.nombre as proveedor
+
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto
-        left join gasto g on a.id = g.idasignacion
-        where a.eliminado = false and a.estado = 3 and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        
+        inner join gasto g on a.id = g.idasignacion
+        inner join tipo t on t.id = g.idtipo
+        inner join clasificacion c on c.id = g.idclasificacion
+        inner join personal pe on pe.id = g.idpersonal
+        left join proveedor pr on pr.id = g.idproveedor
+        where a.eliminado = false and a.estado = 3 and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)}`
         const [rows] = await pool.query(sql)
+        // console.log(rows, 'lista gastos realizados')
         return rows
     }
 
-    totalAsignacionPorProyecto = async (id) => {
-        const sql = `select sum(a.monto) as total
-        from proyecto p 
+    listaAsignacionPorProyecto = async (id) => {
+        const sql = `select
+        concat(pe.nombre,' ',pe.apellido1,' ',pe.apellido2) as personal, p.nombre as proyecto, a.descripcion, a.comprobante, a.tipo, a.estado, a.monto,
+        DATE_FORMAT(a.fecha, "%Y-%m-%d") as fechaasignacion,DATE_FORMAT(a.fecharendicion, "%Y-%m-%d") as fecharendicion, DATE_FORMAT(a.fechaaprobacion, "%Y-%m-%d") as fechaaprobacion
+        from proyecto p  
         inner join asignacion a on p.id = a.idproyecto
-        where a.eliminado = false and a.estado = 3 and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        inner join personal pe on a.idpersonal = pe.id
+        where a.eliminado = false and a.estado = 3 and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} `
         const [rows] = await pool.query(sql)
+        // console.log(rows, 'lista de asignaciones')
         return rows
     }
 
 
     generarReportePorProyecto = async (id) => {
-        console.log(id, 'modelo')
-        const sql = `select p.nombre as proyecto, concat(pe.nombre,' ', pe.apellido1, pe.apellido2) as personal, DATE_FORMAT(a.fecha, "%Y-%m-%d") as fechaasignacion,
-        a.monto as montoasignado, a.descripcion as descripcionasignacion,a.comprobante as comprobanteasignacion, DATE_FORMAT(g.fecha, "%Y-%m-%d") as fechagasto, g.descripcion as descripciongasto, g.egreso as gasto, 
-        g.comprobante as comprobantegasto
+        // console.log(id, 'modelo')
+        const sqlgasto = `select sum(g.egreso) as totalgasto
         
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto
-        inner join personal pe on pe.id = a.idpersonal
-        left join gasto g on a.id = g.idasignacion
+        inner join gasto g on a.id = g.idasignacion
         where a.eliminado = false and a.estado = 3 and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
-        const [rows] = await pool.query(sql)
+        const [gasto] = await pool.query(sqlgasto)
 
-        const [gasto] = await this.totalGatoPorProyecto(id)
-        const [total] = await this.totalAsignacionPorProyecto(id)
+        const sqlasignacion = `select sum(a.monto) as totalasignacion
+        
+        from proyecto p 
+        inner join asignacion a on p.id = a.idproyecto
+        where a.eliminado = false and a.estado = 3 and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [asignacion] = await pool.query(sqlasignacion)
 
-        return [rows, total, gasto]
+
+        const sqlCantidadGasto = `select count(g.id) as cantidadgasto
+        
+        from proyecto p 
+        inner join asignacion a on p.id = a.idproyecto
+        inner join gasto g on a.id = g.idasignacion
+        where a.eliminado = false and a.estado = 3 and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [cantidadGasto] = await pool.query(sqlCantidadGasto)
+
+
+        const sqlCantidadAsignacion = `select count(a.id) as cantidadasignacion
+        from proyecto p 
+        inner join asignacion a on p.id = a.idproyecto
+        where a.eliminado = false and a.estado = 3 and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [cantidadAsignacion] = await pool.query(sqlCantidadAsignacion)
+
+
+
+
+        const slqtotales = `select sum(g.egreso) as egreso, (p.montocontrato+montomodificado) as total
+        
+        from proyecto p 
+        inner join asignacion a on p.id = a.idproyecto
+        inner join gasto g on g.idasignacion = a.id
+        where a.eliminado = false and p.id  = ${pool.escape(id.proyecto)}`
+        const [totales] = await pool.query(slqtotales)
+        // console.log(totales)
+
+        const listGasto = await this.listaGastoPorProyecto(id)
+        const listAsignacion = await this.listaAsignacionPorProyecto(id)
+        // console.log(listAsignacion, listGasto)
+
+        return [gasto[0], asignacion[0], listGasto, listAsignacion, cantidadGasto[0], cantidadAsignacion[0], totales]
     }
 
 
     // por persona
 
-    totalGatoPorPersona = async (id) => {
-        const sql = `select sum(g.egreso) as total
+    listarGastoPorPersona = async (id) => {
+        const sql = `select p.nombre as proyecto, concat(pe.nombre,' ',pe.apellido1,' ',pe.apellido2) as personal, a.descripcion as descripcionasignacion,
+        a.comprobante as detalleasignacion, 
+        g.descripcion as descripciongasto, g.comprobante as detallegasto, t.tipo as tipogasto, c.clasificacion as clasificaciongasto, DATE_FORMAT(g.fecha, "%Y-%m-%d") as fechagasto,
+        g.egreso as egresogasto, g.tipo as metodo, g.factura as facturagasto, pr.nombre as proveedor
+
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto
-        inner join personal pe on pe.id = a.idpersonal 
-        left join gasto g on a.id = g.idasignacion
-        where a.eliminado = false and a.estado = 3 and pe.id = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        inner join personal pe on pe.id = a.idpersonal
+        
+        inner join gasto g on a.id = g.idasignacion
+        inner join tipo t on t.id = g.idtipo
+        inner join clasificacion c on c.id = g.idclasificacion
+        left join proveedor pr on pr.id = g.idproveedor
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} 
+        and pe.id = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)}`
         const [rows] = await pool.query(sql)
+        // console.log(rows, 'lista gastos realizados')
         return rows
     }
 
-    totalAsignacionPorPersona = async (id) => {
-        const sql = `select sum(a.monto) as total
-        from proyecto p 
-        inner join asignacion a on p.id = a.idproyecto 
-        inner join personal pe on pe.id = a.idpersonal 
-        where a.eliminado = false and a.estado = 3 and pe.id = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+    listarAsignacionPorPersona = async (id) => {
+        const sql = `select
+        concat(pe.nombre,' ',pe.apellido1,' ',pe.apellido2) as personal, p.nombre as proyecto, a.descripcion, a.comprobante, a.tipo, a.estado, a.monto,
+        DATE_FORMAT(a.fecha, "%Y-%m-%d") as fechaasignacion,DATE_FORMAT(a.fecharendicion, "%Y-%m-%d") as fecharendicion, DATE_FORMAT(a.fechaaprobacion, "%Y-%m-%d") as fechaaprobacion
+        from proyecto p  
+        inner join asignacion a on p.id = a.idproyecto
+        inner join personal pe on a.idpersonal = pe.id
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} 
+        and pe.id = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} `
         const [rows] = await pool.query(sql)
+        // console.log(rows, 'lista de asignaciones')
         return rows
     }
+
+    
+
 
 
     generarReportePorPersona = async (id) => {
         console.log(id, 'modelo')
-        const sql = `select p.nombre as proyecto, concat(pe.nombre,'  ', pe.apellido1,'  ', pe.apellido2) as personal, DATE_FORMAT(a.fecha, "%Y-%m-%d") as fechaasignacion,
-        a.monto as montoasignado, a.descripcion as descripcionasignacion,a.comprobante as comprobanteasignacion, DATE_FORMAT(g.fecha, "%Y-%m-%d") as fechagasto, g.descripcion as descripciongasto, g.egreso as gasto, 
-        g.comprobante as comprobantegasto
+        const sqlgasto = `select sum(g.egreso) as totalgasto
         
+        from personal pe  
+        inner join asignacion a on pe.id = a.idpersonal
+        inner join gasto g on a.id = g.idasignacion
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} and pe.id = ${pool.escape(id.persona)}
+         and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [gasto] = await pool.query(sqlgasto)
+
+        const sqlasignacion = `select sum(a.monto) as totalasignacion
+        from personal pe  
+        inner join asignacion a on pe.id = a.idpersonal
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} and pe.id = ${pool.escape(id.persona)}
+         and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [asignacion] = await pool.query(sqlasignacion)
+
+
+        const sqlCantidadGasto = `select count(g.id) as cantidadgasto
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto
-        inner join personal pe on a.idpersonal = pe.id
-        left join gasto g on a.id = g.idasignacion
-        where a.eliminado = false and a.estado = 3 and pe.id  = ${pool.escape(id.persona)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
-        const [rows] = await pool.query(sql)
+        inner join gasto g on a.id = g.idasignacion
+        inner join personal pe on pe.id = a.idpersonal
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} and pe.id = ${pool.escape(id.persona)}
+        and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [cantidadGasto] = await pool.query(sqlCantidadGasto)
 
-        const [gasto] = await this.totalGatoPorPersona(id)
-        const [total] = await this.totalAsignacionPorPersona(id)
 
-        return [rows, total, gasto]
+        const sqlCantidadAsignacion = `select count(a.id) as cantidadasignacion
+        from proyecto p 
+        inner join asignacion a on p.id = a.idproyecto
+        inner join personal pe on pe.id = a.idpersonal
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} and pe.id = ${pool.escape(id.persona)}
+        and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [cantidadAsignacion] = await pool.query(sqlCantidadAsignacion)
+
+
+
+
+
+        const listGasto = await this.listarGastoPorPersona(id)
+        const listAsignacion = await this.listarAsignacionPorPersona(id)
+        console.log(listAsignacion, 'gasto')
+
+        return [gasto[0], asignacion[0], listGasto, listAsignacion, cantidadGasto[0], cantidadAsignacion[0]]
     }
 
 
     /// por estado de asignacion
-    totalGatoPorEstado = async (id) => {
-        const sql = `select sum(g.egreso) as total
+ 
+    listaGastoPorEstado = async (id) => {
+        const sql = `select p.nombre as proyecto, concat(pe.nombre,' ',pe.apellido1,' ',pe.apellido2) as personal, a.descripcion as descripcionasignacion,
+        a.comprobante as detalleasignacion, 
+        g.descripcion as descripciongasto, g.comprobante as detallegasto, t.tipo as tipogasto, c.clasificacion as clasificaciongasto, DATE_FORMAT(g.fecha, "%Y-%m-%d") as fechagasto,
+        g.egreso as egresogasto, g.tipo as metodo, g.factura as facturagasto, pr.nombre as proveedor
+
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto
-        left join gasto g on a.id = g.idasignacion
-        where a.eliminado = false and a.estado = ${pool.escape(id.estado)}  and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        
+        inner join gasto g on a.id = g.idasignacion
+        inner join tipo t on t.id = g.idtipo
+        inner join clasificacion c on c.id = g.idclasificacion
+        inner join personal pe on pe.id = g.idpersonal
+        left join proveedor pr on pr.id = g.idproveedor
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)}`
         const [rows] = await pool.query(sql)
+        // console.log(rows, 'lista gastos realizados')
         return rows
     }
 
-
-    totalAsignacionPorEstado = async (id) => {
-        const sql = `select sum(a.monto) as total
-        from proyecto p 
+    listaAsignacionPorEstado = async (id) => {
+        const sql = `select
+        concat(pe.nombre,' ',pe.apellido1,' ',pe.apellido2) as personal, p.nombre as proyecto, a.descripcion, a.comprobante, a.tipo, a.estado, a.monto,
+        DATE_FORMAT(a.fecha, "%Y-%m-%d") as fechaasignacion,DATE_FORMAT(a.fecharendicion, "%Y-%m-%d") as fecharendicion, DATE_FORMAT(a.fechaaprobacion, "%Y-%m-%d") as fechaaprobacion
+        from proyecto p  
         inner join asignacion a on p.id = a.idproyecto
-        where a.eliminado = false and a.estado = ${pool.escape(id.estado)}  and p.id = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} GROUP by p.id;`
+        inner join personal pe on a.idpersonal = pe.id
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} and a.fecha>=${pool.escape(id.ini)} and a.fecha<=${pool.escape(id.fin)} `
         const [rows] = await pool.query(sql)
+        // console.log(rows, 'lista de asignaciones')
         return rows
     }
 
 
     generarReportePorEstado = async (id) => {
-        console.log(id, 'modelo')
-        const sql = `select p.nombre as proyecto, concat(pe.nombre,' ', pe.apellido1, pe.apellido2) as personal, DATE_FORMAT(a.fecha, "%Y-%m-%d") as fechaasignacion,
-        a.monto as montoasignado, a.descripcion as descripcionasignacion,a.comprobante as comprobanteasignacion, DATE_FORMAT(g.fecha, "%Y-%m-%d") as fechagasto, g.descripcion as descripciongasto, g.egreso as gasto, 
-        g.comprobante as comprobantegasto
+        // console.log(id, 'modelo')
+        const sqlgasto = `select sum(g.egreso) as totalgasto
         
         from proyecto p 
         inner join asignacion a on p.id = a.idproyecto
-        inner join personal pe on pe.id = a.idpersonal
-        left join gasto g on a.id = g.idasignacion
-        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} and p.id  = ${pool.escape(id.proyecto)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
-        const [rows] = await pool.query(sql)
+        inner join gasto g on a.id = g.idasignacion
+        where a.eliminado = false and a.estado =  ${pool.escape(id.estado)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [gasto] = await pool.query(sqlgasto)
 
-        const [gasto] = await this.totalGatoPorEstado(id)
-        const [total] = await this.totalAsignacionPorEstado(id)
+        const sqlasignacion = `select sum(a.monto) as totalasignacion
+        
+        from proyecto p 
+        inner join asignacion a on p.id = a.idproyecto
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [asignacion] = await pool.query(sqlasignacion)
 
-        return [rows, total, gasto]
+
+        const sqlCantidadGasto = `select count(g.id) as cantidadgasto
+        
+        from proyecto p 
+        inner join asignacion a on p.id = a.idproyecto
+        inner join gasto g on a.id = g.idasignacion
+        where a.eliminado = false and a.estado  = ${pool.escape(id.estado)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [cantidadGasto] = await pool.query(sqlCantidadGasto)
+
+
+        const sqlCantidadAsignacion = `select count(a.id) as cantidadasignacion
+        from proyecto p 
+        inner join asignacion a on p.id = a.idproyecto
+        where a.eliminado = false and a.estado = ${pool.escape(id.estado)} and a.fecha>=${pool.escape(id.ini)} and a.fecha <= ${pool.escape(id.fin)}`
+        const [cantidadAsignacion] = await pool.query(sqlCantidadAsignacion)
+
+
+
+
+        const slqtotales = `select sum(g.egreso) as egreso, (p.montocontrato+montomodificado) as total
+        
+        from proyecto p 
+        inner join asignacion a on p.id = a.idproyecto
+        inner join gasto g on g.idasignacion = a.id
+        where a.eliminado = false and p.id  = ${pool.escape(id.proyecto)}`
+        const [totales] = await pool.query(slqtotales)
+        // console.log(totales)
+
+        const listGasto = await this.listaGastoPorEstado(id)
+        const listAsignacion = await this.listaAsignacionPorEstado(id)
+        // console.log(listAsignacion, listGasto)
+
+        return [gasto[0], asignacion[0], listGasto, listAsignacion, cantidadGasto[0], cantidadAsignacion[0], totales]
     }
-
 
 
     // por tipo

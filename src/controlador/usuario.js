@@ -4,6 +4,7 @@ import { eliminar, buscar, siguiente,insertar,actualizar, deshabilitar, habilita
 import pool from '../modelo/bdConfig.js'
 import { CLAVEGMAIL } from '../config.js'
 import nodemailer from "nodemailer";
+import { body } from "express-validator"
 //const modelo from "../modelo/usuario.js"
 // desde esta plantilla se importa las funcionalidades de los controladores de los modulos
 
@@ -64,8 +65,9 @@ rutas.post("/proyectos", async (req, res) => {
 rutas.post("/buscar", buscar, async (req, res) => {
     // console.log(req.body)
     const dato = req.body.dato
+    const user = req.body.usuario
     try {
-        const resultado = await usuarios.buscar(dato)
+        const resultado = await usuarios.buscar(dato, user)
         return res.send({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)
@@ -178,7 +180,7 @@ rutas.post("/next", siguiente, async (req, res) => {
 
     let id = req.body.id
     try {
-        const resultado = await usuarios.listarSiguiente(id)
+        const resultado = await usuarios.listarSiguiente(id, req.body.usuario)
         if (resultado.length > 0)
             return res.json({ ok: true, data: resultado })
         else
@@ -209,7 +211,7 @@ rutas.post("/nextdelete", siguiente, async (req, res) => {
 rutas.post("/anterior", siguiente, async (req, res) => {
     let id = req.body.id
     try {
-        const resultado = await usuarios.listarAnterior(id)
+        const resultado = await usuarios.listarAnterior(id, req.body.usuario)
         if (resultado.length > 0)
             return res.json({ ok: true, data: resultado })
         else
@@ -239,7 +241,7 @@ rutas.post("/anterioreliminados", siguiente, async (req, res) => {
 rutas.post("/all", async (req, res) => {
     // console.log(req.body, 'controlador')  
     try {
-        const resultado = await usuarios.listar()
+        const resultado = await usuarios.listar(req.body.usuario)
         return res.json({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)
@@ -280,7 +282,7 @@ rutas.post("/buscarAsignacion", buscar, async (req, res) => {
     // console.log(req.body)
     const dato = req.body.dato
     try {
-        const resultado = await usuarios.buscarAsinacionUsuario(dato)
+        const resultado = await usuarios.buscarAsinacionUsuario(dato, req.body.usuario)
         return res.send({ data: resultado, ok: true })
     } catch (error) {
         console.log(error)
@@ -402,7 +404,7 @@ rutas.post("/actualizar", actualizar, async (req, res) => {
         if (resultado.existe === 2)
             return res.json({ ok: false, msg: 'Este C.I. ya esta registrado' })
         else
-            return res.json({data:resultado, ok: true, msg: "El Usuario se ha registrado correctamente" });
+            return res.json({data:resultado, ok: true, msg: "El Registro se ha actualizado correctamente" });
 
     } catch (error) {
         console.log(error)

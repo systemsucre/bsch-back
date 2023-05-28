@@ -145,7 +145,7 @@ rutas.post("/insertar", insertar, async (req, res) => {
         if (resultado.existe === 1) {
             return res.json({ msg: 'ya existe el registro', ok: false })
         }
-        return res.json({ ok: true, data: resultado, msg: 'Registro gurdado' })
+        return res.json({ ok: true, data: resultado, msg: 'Registro guardado corectamente' })
 
     } catch (error) {
         console.log(error)

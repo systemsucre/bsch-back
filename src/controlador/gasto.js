@@ -49,7 +49,7 @@ const fileUpload = multer({
 
 
 rutas.post("/delete", async (req, res) => {
-    console.log(req.body, 'controlador Eliminar')
+    console.log(req.body, 'controlador Eliminar')  
     try {
         if (req.body.eliminar)
             fs.unlinkSync(path.join(__dirname, '../../imagenes/recibos/' + req.body.id + '.png'))

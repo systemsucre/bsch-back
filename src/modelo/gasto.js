@@ -101,7 +101,7 @@ export class Gasto {
     }
 
 
-    listargastos = async (id) => {
+    listargastos = async (id) => {   
         const sql =
             `SELECT id, descripcion,  comprobante, DATE_FORMAT(fecha,"%Y-%m-%d") as fecha, egreso, img
             from gasto 

@@ -23,13 +23,13 @@ export class Usuario {
         return rows
     }
 
-    listar = async () => {
+    listar = async (id) => {
         const sql =
             `SELECT pe.id, pe.username, pe.ci, pe.nombre,
             pe.apellido1,
             pe.apellido2,pe.celular, pe.sueldo, pe.validar 
             from personal pe 
-            where pe.eliminado = false
+            where pe.eliminado = false and pe.id != ${pool.escape(id)}
             ORDER by pe.id DESC limit 10;`;
         const [rows] = await pool.query(sql)
         // console.log(rows, 'lista')
@@ -52,7 +52,7 @@ export class Usuario {
         return rows
     }
 
-    buscar = async (dato) => {
+    buscar = async (dato, user) => {
         // console.log('los datos han llegado', dato)
         const sql =
             `SELECT pe.id, pe.username, pe.ci, pe.nombre,
@@ -62,28 +62,29 @@ export class Usuario {
             where (pe.nombre like '${dato}%' or
             pe.ci like '${dato}%' or
             pe.apellido1  like '${dato}%' or
-            pe.apellido2  like '${dato}%') and pe.eliminado = false
+            pe.apellido2  like '${dato}%') and pe.eliminado = false and pe.id != ${pool.escape(user)}
             ORDER by pe.id`;
         const [rows] = await pool.query(sql)
         return rows
     }
-    listarSiguiente = async (id) => {
+    listarSiguiente = async (id, user) => {
         const sql =
             `SELECT pe.id, pe.username, pe.ci, pe.nombre,
             pe.apellido1,
             pe.apellido2,pe.celular, pe.sueldo, pe.validar 
-            from personal pe  where pe.eliminado = false
+            from personal pe  where pe.eliminado = false and pe.id != ${pool.escape(user)}
             and pe.id < ${pool.escape(id)} ORDER by id DESC  limit 10`;
         const [rows] = await pool.query(sql)
         return rows
     }
-    listarAnterior = async (id) => {
+    listarAnterior = async (id, user) => {
         const sql =
             `SELECT pe.id, pe.username, pe.ci, pe.nombre,
             pe.apellido1,
             pe.apellido2,pe.celular, pe.sueldo, pe.validar 
             from personal pe 
-            WHERE pe.id > ${pool.escape(id)} and pe.eliminado = false limit 10`;
+            WHERE pe.id > ${pool.escape(id)} and pe.eliminado = false  and pe.id != ${pool.escape(user)}
+            limit 10`;
         const [rows] = await pool.query(sql)
         rows.reverse()
         return rows
@@ -126,14 +127,14 @@ export class Usuario {
         const ssql = `delete from sesion
         WHERE idpersonal = ${pool.escape(datos.id)}`;
         await pool.query(ssql)
-        return await this.listar()
+        return await this.listar(datos.usuario)
     }
 
     restaurar = async (datos) => {
         const sql = `update personal set eliminado = false, modificado = ${pool.escape(datos.modificado)} , usuario = ${pool.escape(datos.usuario)}
         WHERE id =  ${pool.escape(datos.id)}`;
         await pool.query(sql)
-        return await this.listar()
+        return await this.listar(datos.usuario)
     }
 
 
@@ -225,7 +226,7 @@ export class Usuario {
 
             if (rowsCi.length === 0) {
                 await pool.query("INSERT INTO personal SET  ?", datos)
-                return await this.listar()
+                return await this.listar(datos.usuario)
             } else return { existe: 2 }
         }
         else return { existe: 1 }
@@ -420,7 +421,7 @@ export class Usuario {
         // console.log(rows, 'lista')
         return rows
     }
-    buscarAsinacionUsuario = async (dato) => {
+    buscarAsinacionUsuario = async (dato, user) => {
         // console.log('los datos han llegado', dato)
         const sql =
             `SELECT pe.id, pe.username, pe.ci, pe.nombre,
@@ -430,7 +431,8 @@ export class Usuario {
             where (pe.nombre like '${dato}%' or
             pe.ci like '${dato}%' or
             pe.apellido1  like '${dato}%' or
-            pe.apellido2  like '${dato}%') and pe.eliminado = false and pe.validar = true and rol.numero = 2
+            pe.apellido2  like '${dato}%') and pe.id != ${pool.escape(user)}
+            pe.eliminado = false and pe.validar = true and rol.numero = 2 
             ORDER by pe.id`;
         const [rows] = await pool.query(sql)
         return rows

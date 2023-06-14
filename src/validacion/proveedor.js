@@ -11,13 +11,14 @@ export const insertar = [
         .isString(),
 
     check('nit')
-        .exists()
         .isLength({ min: 3 })
         .isString(),
-    check('ciudad')
-        .isLength({ min: 3, max: 100 })
+        
+    check('pais')
+        .isLength({ min: 3 })
         .isString(),
-
+    check('cuenta')
+        .isLength({ min: 3 }),
     check('telefono')
         .exists()
         .isNumeric()
@@ -42,15 +43,14 @@ export const editar = [
         .exists()
         .isLength({ min: 3 })
         .isString(),
-
     check('nit')
-        .exists()
         .isLength({ min: 3 })
         .isString(),
-    check('ciudad')
+    check('pais')
         .isLength({ min: 3 })
         .isString(),
-
+    check('cuenta')
+        .isLength({ min: 3 }),
     check('telefono')
         .exists()
         .isNumeric()

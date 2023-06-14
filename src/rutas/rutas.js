@@ -264,7 +264,7 @@ verificacion.use((req, res, next) => {
                 }
                 else {
 
-                    return res.json({ ok: false, msg: 'El Servidor no puede identificar su autencidad en la base de datos, cierre sesion y vuelva a intetentar' })
+                    return res.json({ ok: false, msg: 'El Servidor no puede identificar su autencidad en la base de datos, cierre sesion y vuelva a intentar' })
                 }
             })
         }

@@ -66,12 +66,7 @@ export class Proveedor {
 
     insertar = async (datos) => {
         console.log(datos, 'regis')
-        const sqlexist =
-            `SELECT * from proveedor where
-            nit = ${pool.escape(datos.nit)}`;
-        const [rows] = await pool.query(sqlexist)
 
-        if (rows.length === 0) {
             const nombre =
                 `SELECT * from proveedor where
                 nombre = ${pool.escape(datos.nombre)}`;
@@ -85,19 +80,12 @@ export class Proveedor {
             } else {
                 return { existe: 2 }
             }
-        } else {
-            return { existe: 1 }
-        }
+   
     }
 
     insertaraux = async (datos) => {
         console.log(datos, 'regis')
-        const sqlexist =
-            `SELECT * from proveedor where
-            nit = ${pool.escape(datos.nit)}`;
-        const [rows] = await pool.query(sqlexist)
 
-        if (rows.length === 0) {
             const nombre =
                 `SELECT * from proveedor where
                 nombre = ${pool.escape(datos.nombre)}`;
@@ -113,9 +101,7 @@ export class Proveedor {
             } else {
                 return { existe: 2 }
             }
-        } else {
-            return { existe: 1 }
-        }
+       
     }
 
 
@@ -141,7 +127,7 @@ export class Proveedor {
     actualizar = async (datos) => {
 
         const sqlExists = `SELECT * FROM proveedor WHERE 
-            (nit = ${pool.escape(datos.nit)} or nombre = ${pool.escape(datos.nombre)})      
+            nombre = ${pool.escape(datos.nombre)}      
             and id !=${pool.escape(datos.id)}`;
         const [result] = await pool.query(sqlExists)
 

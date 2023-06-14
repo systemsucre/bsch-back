@@ -21,7 +21,7 @@ const informacion = new Informacion()
 
 
 rutas.post("/copiaSeguridad", async (req, res) => {
-    const dire = path.join(__dirname, '../../backup/copia' + req.body.fecha + '.sql')
+    const dire = path.join(__dirname, '../../backup/copia' + req.body.usuario+req.body.fecha + '.sql')
     const comando =
         `mysqldump -u ${DB_USER} -p${DB_PASSWORD} ${DB_DATABASE} > ${dire}`;
     console.log(comando)

@@ -122,6 +122,7 @@ rutas.post("/insertar", insertar, async (req, res) => {
     const datos = {
         clasificacion: nombre,
         creado,
+        modificado:null,
         usuario
     }
     try {

@@ -91,11 +91,13 @@ export class Asignacion {
 
     search = async (datos) => {
         const sql =
-            `SELECT a.id,a.comprobante, DATE_FORMAT(a.fecha,"%Y-%m-%d") as fecha, a.monto, a.tipo, a.estado
-            from asignacion a inner join personal p on a.idpersonal = p.id
+            `SELECT a.id,a.comprobante, DATE_FORMAT(a.fecha,"%Y-%m-%d") as fecha, a.monto, a.tipo, a.estado , a.descripcion, pr.id as idproyecto,pr.nombre as proyecto,a.descripcion
+            from asignacion a 
+            inner join personal p on a.idpersonal = p.id
+            inner join proyecto pr on a.idproyecto = pr.id
             where p.id = ${pool.escape(datos.id)} and (a.comprobante  like '${datos.dato}%' or a.descripcion like '${datos.dato}%') and a.eliminado = false
             ORDER by a.id DESC;`;
-        console.log(sql)
+        // console.log(sql)
         const [rows] = await pool.query(sql)
         // console.log(rows, 'lista')
         return rows
@@ -103,8 +105,11 @@ export class Asignacion {
 
     searchDelete = async (datos) => {
         const sql =
-            `SELECT a.id,a.comprobante, DATE_FORMAT(a.fecha,"%Y-%m-%d") as fecha, a.monto, a.tipo, a.estado
-            from asignacion a inner join personal p on a.idpersonal = p.id
+            `SELECT a.id,a.comprobante, DATE_FORMAT(a.fecha,"%Y-%m-%d") as fecha, a.monto, a.tipo, a.estado, pr.id as idproyecto,
+            pr.nombre as proyecto,a.descripcion
+            from asignacion a 
+            inner join personal p on a.idpersonal = p.id
+            inner join proyecto pr on a.idproyecto = pr.id
             where p.id = ${pool.escape(datos.id)} and (a.comprobante  like '${datos.dato}%' or a.descripcion like '${datos.dato}%') and a.eliminado = true
             ORDER by a.id DESC;`;
         console.log(sql)
